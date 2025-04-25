@@ -3,13 +3,25 @@ const cors = require('cors');
 const port = process.env.PORT || 5000;
 const app = express();
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+// const cors = require('cors');
+
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://shoppixel-dashboard.vercel.app'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  credentials: true,
+}));
+
 const username = process.env.DB_USERNAME;
 const password = process.env.DB_PASSWORD;
+const PORT =process.env.DB_PORT
 const uri = `mongodb+srv://${username}:${password}@cluster0.gfesh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -32,7 +44,19 @@ async function run() {
     app.get('/', (req, res) => {
       res.send('Simple server is running');
     });
-
+    app.get('/products/:id', async (req, res) => {
+      const { id } = req.params;
+    
+      try {
+        const product = await productCollection.findById(id);
+        if (!product) {
+          return res.status(404).json({ message: 'Product not found' });
+        }
+        res.json(product);
+      } catch (error) {
+        res.status(500).json({ message: 'Server Error', error });
+      }
+    });
     // Product section
     app.get('/products', async (req, res) => {
       const { category } = req.query;
