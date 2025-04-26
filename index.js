@@ -33,30 +33,33 @@ const client = new MongoClient(uri, {
   }
 });
 
-const productCollection = client.db('productDB').collection('products');
 
 async function run() {
   try {
     // Connect the client to the server (optional starting in v4.7)
     await client.connect();
-
+    const productCollection = client.db('productDB').collection('products');
+    
     // Root route
     app.get('/', (req, res) => {
       res.send('Simple server is running');
     });
-    app.get('/products/:id', async (req, res) => {
-      const { id } = req.params;
-    
-      try {
-        const product = await productCollection.findById(id);
-        if (!product) {
-          return res.status(404).json({ message: 'Product not found' });
-        }
-        res.json(product);
-      } catch (error) {
-        res.status(500).json({ message: 'Server Error', error });
-      }
-    });
+   
+app.get('/products/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const product = await productCollection.findOne(query);
+
+    if (!product) {
+      return res.status(404).send({ message: 'Product not found' });
+    }
+
+    res.send(product);
+  } catch (error) {
+    res.status(500).send({ message: 'Something went wrong', error: error.message });
+  }
+});
     // Product section
     app.get('/products', async (req, res) => {
       const { category } = req.query;
